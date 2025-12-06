@@ -25,6 +25,30 @@ const ShortcutGrid = ({ config, shortcuts }) => {
     const isChangingRef = useRef(false);
 
     const { colGap, rowGap } = calculateGaps(cols, rows);
+    const [scale, setScale] = useState(1);
+
+    // Calculate scale to fit screen
+    useEffect(() => {
+        const handleResize = () => {
+            const padding = 48; // Horizontal padding
+            const availableWidth = window.innerWidth - padding;
+
+            // Calculate required width: (cols * iconSize) + ((cols - 1) * colGap)
+            const requiredWidth = (cols * iconSize) + ((cols - 1) * colGap);
+
+            if (requiredWidth > availableWidth) {
+                const newScale = availableWidth / requiredWidth;
+                // Cap scale at 1 (don't scale up, only down)
+                setScale(Math.min(1, newScale));
+            } else {
+                setScale(1);
+            }
+        };
+
+        handleResize(); // Initial calculation
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [cols, iconSize, colGap]);
 
     const itemsPerPage = cols * rows;
     const totalPages = Math.ceil(shortcuts.length / itemsPerPage);
@@ -53,7 +77,7 @@ const ShortcutGrid = ({ config, shortcuts }) => {
             setTimeout(() => {
                 isChangingRef.current = false;
                 accumulatedRef.current = 0;
-            }, 250);
+            }, 600);
         }
     }, [totalPages, currentPage]);
 
@@ -67,8 +91,8 @@ const ShortcutGrid = ({ config, shortcuts }) => {
 
             const now = Date.now();
 
-            // Reset if new gesture (gap > 100ms)
-            if (now - lastTimeRef.current > 100) {
+            // Reset if new gesture (gap > 200ms)
+            if (now - lastTimeRef.current > 200) {
                 accumulatedRef.current = 0;
             }
             lastTimeRef.current = now;
@@ -100,8 +124,10 @@ const ShortcutGrid = ({ config, shortcuts }) => {
 
             if (accumulatedRef.current > threshold) {
                 goToPage(currentPage + 1);
+                accumulatedRef.current = 0; // Reset immediately
             } else if (accumulatedRef.current < -threshold) {
                 goToPage(currentPage - 1);
+                accumulatedRef.current = 0; // Reset immediately
             }
         };
 
@@ -146,12 +172,16 @@ const ShortcutGrid = ({ config, shortcuts }) => {
                             className="flex-shrink-0 w-full flex justify-center"
                         >
                             <div
-                                className="grid max-w-4xl px-4 py-1"
+                                className="grid px-4 py-10 transition-transform duration-300"
                                 style={{
                                     gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
                                     columnGap: `${colGap}px`,
                                     rowGap: `${rowGap}px`,
-                                    width: '100%',
+                                    transform: `scale(${scale})`,
+                                    transformOrigin: 'top center',
+                                    // Calculate exact width to ensure grid layout is preserved before scaling
+                                    width: scale < 1 ? `${(cols * iconSize) + ((cols - 1) * colGap)}px` : '100%',
+                                    maxWidth: scale < 1 ? 'none' : '56rem' // 4xl
                                 }}
                             >
                                 {pageShortcuts.map((shortcut) => {
@@ -163,7 +193,7 @@ const ShortcutGrid = ({ config, shortcuts }) => {
                                         <a
                                             key={shortcut.id}
                                             href={shortcut.url}
-                                            className="group relative flex flex-col items-center gap-3 transition-all duration-300 hover:scale-105 hover:z-10"
+                                            className="group relative flex flex-col items-center gap-3 transition-all duration-300 hover:scale-105 hover:z-10 justify-self-center h-fit"
                                             draggable={false}
                                         >
                                             <div

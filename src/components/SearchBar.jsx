@@ -12,7 +12,7 @@ const SearchBar = () => {
     };
 
     return (
-        <form onSubmit={handleSearch} className="w-full max-w-2xl mb-12">
+        <form onSubmit={handleSearch} className="w-full max-w-2xl mb-4">
             <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Search className="h-5 w-5 text-gray-400 group-focus-within:text-white transition-colors" />

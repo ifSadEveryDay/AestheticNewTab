@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, X, Image as ImageIcon, Layout as LayoutIcon, Cloud, RefreshCw, Globe, LogOut } from 'lucide-react';
+import { Settings as SettingsIcon, X, Image as ImageIcon, Layout as LayoutIcon, Cloud, RefreshCw, Globe, LogOut, Github } from 'lucide-react';
 import { fetchRandomPhoto, cacheImage } from '../utils/unsplash';
 import WallpaperModal from './WallpaperModal';
 import IconSelector from './IconSelector';
@@ -19,7 +19,8 @@ const Settings = ({
     shortcuts,
     onEditShortcut,
     onRemoveShortcut,
-    onReorderShortcuts
+    onReorderShortcuts,
+    onSyncPull
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isWallpaperModalOpen, setIsWallpaperModalOpen] = useState(false);
@@ -150,7 +151,7 @@ const Settings = ({
                                                 <input
                                                     type="range"
                                                     min="1"
-                                                    max="6"
+                                                    max="4"
                                                     value={gridConfig.rows}
                                                     onChange={(e) => onConfigChange({ rows: Number(e.target.value) })}
                                                     className="w-full accent-white/80 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer"
@@ -166,7 +167,7 @@ const Settings = ({
                                                 <input
                                                     type="range"
                                                     min="3"
-                                                    max="10"
+                                                    max="6"
                                                     value={gridConfig.cols}
                                                     onChange={(e) => onConfigChange({ cols: Number(e.target.value) })}
                                                     className="w-full accent-white/80 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer"
@@ -301,6 +302,7 @@ const Settings = ({
                                             showToast('Logged in successfully!', 'success');
                                         }}
                                         showToast={showToast}
+                                        onSyncPull={onSyncPull}
                                     />
                                 ) : (
                                     <SyncPanel
@@ -337,6 +339,23 @@ const Settings = ({
                                 )}
                             </div>
                         )}
+
+                        {/* About Section - Always visible */}
+                        <div className="pt-4 border-t border-white/10">
+                            <h3 className="text-sm font-medium text-white mb-4">关于</h3>
+                            <a
+                                href="https://github.com/jiangnan1224/AestheticNewTab"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-all border border-white/10 hover:border-white/20 group"
+                            >
+                                <Github className="h-5 w-5 text-white/80 group-hover:text-white transition-colors" />
+                                <div className="flex-1">
+                                    <div className="text-sm text-white font-medium">Aesthetic New Tab</div>
+                                    <div className="text-xs text-white/40">View source on GitHub</div>
+                                </div>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -482,7 +501,7 @@ const AddShortcutForm = ({ onAddShortcut, showToast }) => {
 };
 
 // Login Form Component
-const LoginForm = ({ onLogin, showToast }) => {
+const LoginForm = ({ onLogin, showToast, onSyncPull }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isRegistering, setIsRegistering] = useState(false);
@@ -500,6 +519,10 @@ const LoginForm = ({ onLogin, showToast }) => {
                 await syncService.login(email, password);
             }
             onLogin(email);
+            // Trigger immediate pull after login
+            if (onSyncPull) {
+                onSyncPull();
+            }
         } catch (error) {
             showToast(error.message, 'error');
         } finally {
@@ -556,7 +579,7 @@ const LoginForm = ({ onLogin, showToast }) => {
 
             <div className="mt-6 p-4 bg-white/5 rounded-lg border border-white/10">
                 <p className="text-xs text-white/60 leading-relaxed">
-                    Sync your shortcuts, settings, and background across all your devices. Your data is securely stored and only accessible with your account.
+                    同步您的快捷方式、设置和背景到云端，您可以在所有设备上访问您的数据。
                 </p>
             </div>
         </div>
@@ -597,31 +620,13 @@ const SyncPanel = ({ email, isSyncing, onSync, onLogout, lastSync }) => {
                     <div className="text-sm text-white">{formatLastSync(lastSync)}</div>
                 </div>
 
-                {/* Sync Button */}
-                <button
-                    onClick={onSync}
-                    disabled={isSyncing}
-                    className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-sm font-medium text-white rounded-lg transition-colors shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                    {isSyncing ? (
-                        <>
-                            <RefreshCw className="h-4 w-4 animate-spin" />
-                            同步中...
-                        </>
-                    ) : (
-                        <>
-                            <Cloud className="h-4 w-4" />
-                            立即同步
-                        </>
-                    )}
-                </button>
-
                 {/* Info */}
                 <div className="p-4 bg-white/5 rounded-lg border border-white/10">
                     <p className="text-xs text-white/60 leading-relaxed">
-                        点击“立即同步”将上传当前的快捷方式、设置和背景到云端。修改数据后会自动同步。
+                        您的快捷方式、设置和背景会自动同步到云端。修改数据后会自动保存。
                     </p>
                 </div>
+
             </div>
         </div>
     );

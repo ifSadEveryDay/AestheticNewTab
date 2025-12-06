@@ -26,7 +26,7 @@ export default {
             } else if (path === '/api/sync/push') {
                 return await handlePush(request, env, corsHeaders);
             } else {
-                return jsonResponse({ error: 'Not found' }, 404, corsHeaders);
+                return jsonResponse({ error: '未找到' }, 404, corsHeaders);
             }
         } catch (error) {
             return jsonResponse({ error: error.message }, 500, corsHeaders);
@@ -64,14 +64,14 @@ function generateToken() {
 async function verifyToken(request, env) {
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        throw new Error('Unauthorized');
+        throw new Error('未授权');
     }
 
     const token = authHeader.substring(7);
     const email = await env.SYNC_KV.get(`token:${token}`);
 
     if (!email) {
-        throw new Error('Invalid token');
+        throw new Error('无效的令牌');
     }
 
     return email;
@@ -82,13 +82,13 @@ async function handleRegister(request, env, corsHeaders) {
     const { email, password } = await request.json();
 
     if (!email || !password) {
-        return jsonResponse({ error: 'Email and password required' }, 400, corsHeaders);
+        return jsonResponse({ error: '需要邮箱和密码' }, 400, corsHeaders);
     }
 
     // Check if user exists
     const existingUser = await env.SYNC_KV.get(`user:${email}`);
     if (existingUser) {
-        return jsonResponse({ error: 'User already exists' }, 409, corsHeaders);
+        return jsonResponse({ error: '用户已存在' }, 409, corsHeaders);
     }
 
     // Hash password
@@ -121,7 +121,7 @@ async function handleLogin(request, env, corsHeaders) {
     // Get user
     const userData = await env.SYNC_KV.get(`user:${email}`);
     if (!userData) {
-        return jsonResponse({ error: 'Invalid credentials' }, 401, corsHeaders);
+        return jsonResponse({ error: '凭证无效' }, 401, corsHeaders);
     }
 
     const user = JSON.parse(userData);
@@ -129,7 +129,7 @@ async function handleLogin(request, env, corsHeaders) {
     // Verify password
     const passwordHash = await hashPassword(password);
     if (passwordHash !== user.passwordHash) {
-        return jsonResponse({ error: 'Invalid credentials' }, 401, corsHeaders);
+        return jsonResponse({ error: '凭证无效' }, 401, corsHeaders);
     }
 
     // Generate token
@@ -160,7 +160,7 @@ async function handlePush(request, env, corsHeaders) {
 
     // Validate data structure
     if (!data.shortcuts || !data.gridConfig || !data.bgConfig) {
-        return jsonResponse({ error: 'Invalid data structure' }, 400, corsHeaders);
+        return jsonResponse({ error: '无效的数据结构' }, 400, corsHeaders);
     }
 
     // Add timestamp

@@ -29,6 +29,15 @@ function App() {
   });
 
   const [shortcuts, setShortcuts] = useState([]);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Track if we're currently pulling data to prevent auto-push during pull
   const isPullingRef = useRef(false);
@@ -132,9 +141,21 @@ function App() {
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
+    // Listen for storage changes (e.g. from Popup)
+    const handleStorageChange = (e) => {
+      if (e.key === 'shortcuts') {
+        const newValue = e.newValue;
+        if (newValue) {
+          setShortcuts(JSON.parse(newValue));
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
     return () => {
       clearInterval(syncInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, [pullFromCloud]);
 
@@ -209,8 +230,9 @@ function App() {
   // Disable browser back/forward gestures (two-finger swipe on trackpad)
   useEffect(() => {
     const preventBrowserGesture = (e) => {
-      // If horizontal scroll is dominant, prevent browser navigation
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 5) {
+      // Prevent browser navigation gestures (horizontal swipe)
+      // We block it if there's ANY horizontal movement to be safe
+      if (Math.abs(e.deltaX) > 0) {
         e.preventDefault();
       }
     };
@@ -262,15 +284,16 @@ function App() {
         onEditShortcut={handleEditShortcut}
         onRemoveShortcut={handleRemoveShortcut}
         onReorderShortcuts={handleReorder}
+        onSyncPull={pullFromCloud}
       />
-      <div className="w-full flex flex-col items-center">
-        {/* Time Widget (Optional but nice) */}
-        <div className={`text-center ${gridConfig.showSearchBar ? 'mb-6' : 'mb-20'}`}>
-          <h1 className="text-8xl font-light text-white drop-shadow-lg tracking-tight">
-            {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </h1>
-        </div>
+      {/* Top Left Time Widget */}
+      <div className="absolute top-8 left-8 z-50">
+        <h1 className="text-6xl font-light text-white/90 drop-shadow-md tracking-wide select-none">
+          {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </h1>
+      </div>
 
+      <div className="w-full flex flex-col items-center mt-8">
         {gridConfig.showSearchBar && <SearchBar />}
 
         <ShortcutGrid

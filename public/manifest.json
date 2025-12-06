@@ -9,9 +9,16 @@
     "chrome_url_overrides": {
         "newtab": "index.html"
     },
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": "logo.png",
+        "default_title": "添加到快捷方式"
+    },
     "permissions": [
         "storage",
-        "unlimitedStorage"
+        "unlimitedStorage",
+        "tabs",
+        "activeTab"
     ],
     "host_permissions": [
         "https://api.unsplash.com/*",
