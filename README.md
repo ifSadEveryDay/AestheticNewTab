@@ -59,24 +59,23 @@
 3. 点击 **加载已解压的扩展程序 (Load unpacked)**。
 4. 选择构建生成的 `dist` 文件夹。
 
-## ☁️ 后端设置 (可选，用于同步)
+## ☁️ 使用Cloudflare部署同步服务 
 
 同步功能依赖于 Cloudflare Worker。
 
-1. **进入 worker 目录**
-   ```bash
-   cd worker
-   ```
+1. 复制 [worker.js](https://github.com/jiangnan1224/AestheticNewTab/blob/main/worker/worker.js)的内容到 Cloudflare Worker，部署一个新的worker项目，名称随意。
 
-2. **部署到 Cloudflare**
-   使用 `wrangler` 部署 worker。
-   ```bash
-   npx wrangler deploy worker.js
-   ```
-
-3. **配置 KV 命名空间**
+2. 配置 KV 命名空间
    - 在 Cloudflare 控制台创建一个 KV 命名空间。
    - 将其绑定到您的 worker，名称设为 `SYNC_KV`。
+
+## 更新同步地址
+
+1. fork本项目。
+
+2. 更新 `syncService.js` 中的 `SYNC_URL` 为您的 worker URL。   
+
+3. 到项目的Actions中，点击`Build Chrome Extension`，打包插件。
 
 ## 📝 许可证
 

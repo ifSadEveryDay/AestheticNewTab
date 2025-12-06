@@ -1,8 +1,0 @@
-name = "newtab-sync"
-main = "worker.js"
-compatibility_date = "2023-10-30"
-
-[[kv_namespaces]]
-binding = "USERS_KV"
-id = "YOUR_KV_NAMESPACE_ID"
-preview_id = "YOUR_KV_NAMESPACE_ID"
