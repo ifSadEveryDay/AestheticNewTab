@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, X, Image as ImageIcon, Layout as LayoutIcon, Cloud, RefreshCw, Globe, LogOut, Github } from 'lucide-react';
-import { fetchRandomPhoto, cacheImage } from '../utils/unsplash';
+import { fetchRandomPhoto } from '../utils/unsplash';
+import { cacheBackgroundImage } from '../utils/cache';
 import WallpaperModal from './WallpaperModal';
 import IconSelector from './IconSelector';
 import ShortcutManager from './ShortcutManager';

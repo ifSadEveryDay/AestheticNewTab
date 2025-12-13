@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { getIconUrl, getIconSources } from '../utils/icons';
+import { getIconUrl } from '../utils/icons';
+import CachedIcon from './CachedIcon';
 
 // Auto-calculate gaps based on grid size
 const calculateGaps = (cols, rows) => {
@@ -200,44 +201,22 @@ const ShortcutGrid = ({ config, shortcuts }) => {
                                                 className="relative rounded-[22px] bg-white shadow-xl flex items-center justify-center overflow-hidden transition-all group-hover:shadow-2xl"
                                                 style={{ width: `${iconSize}px`, height: `${iconSize}px` }}
                                             >
-                                                <img
+                                                <CachedIcon
                                                     src={iconSrc}
                                                     alt={shortcut.title}
-                                                    loading="lazy"
-                                                    decoding="async"
                                                     className="select-none pointer-events-none transition-opacity duration-300"
                                                     style={{
                                                         width: shortcut.iconPadding ? '70%' : '100%',
                                                         height: shortcut.iconPadding ? '70%' : '100%',
                                                         objectFit: shortcut.iconPadding ? 'contain' : 'cover',
                                                     }}
-                                                    draggable={false}
                                                     onError={(e) => {
-                                                        if (shortcut.customIcon?.type === 'custom') {
-                                                            e.target.style.display = 'none';
-                                                            e.target.parentElement.innerHTML = `<span class="text-3xl font-bold text-white">${shortcut.title[0].toUpperCase()}</span>`;
-                                                            e.target.parentElement.classList.add('bg-gradient-to-br', 'from-blue-500', 'to-purple-600');
-                                                            return;
-                                                        }
-
-                                                        const currentSrc = e.target.src;
-                                                        const sources = getIconSources(shortcut.url);
-                                                        if (!sources) return;
-
-                                                        if (currentSrc.includes('icon.horse')) {
-                                                            e.target.src = sources.clearbit;
-                                                        } else if (currentSrc.includes('clearbit')) {
-                                                            e.target.src = sources.google;
-                                                            e.target.style.objectFit = 'contain';
-                                                            e.target.style.padding = '12px';
-                                                        } else if (currentSrc.includes('google')) {
-                                                            e.target.src = sources.ddg;
-                                                        } else if (currentSrc.includes('duckduckgo')) {
-                                                            e.target.src = sources.direct;
-                                                        } else {
-                                                            e.target.style.display = 'none';
-                                                            e.target.parentElement.innerHTML = `<span class="text-3xl font-bold text-white">${shortcut.title[0].toUpperCase()}</span>`;
-                                                            e.target.parentElement.classList.add('bg-gradient-to-br', 'from-blue-500', 'to-purple-600');
+                                                        e.target.style.display = 'none';
+                                                        const p = e.target.parentElement;
+                                                        // Check if already has placeholder to avoid dupes
+                                                        if (!p.querySelector('span')) {
+                                                            p.innerHTML = `<span class="text-3xl font-bold text-white">${shortcut.title[0].toUpperCase()}</span>`;
+                                                            p.classList.add('bg-gradient-to-br', 'from-blue-500', 'to-purple-600');
                                                         }
                                                     }}
                                                 />

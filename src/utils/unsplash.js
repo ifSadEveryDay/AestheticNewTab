@@ -67,27 +67,4 @@ export const fetchPopularPhotos = async (query = '', page = 1) => {
     }
 };
 
-export const cacheImage = async (url) => {
-    try {
-        const cache = await caches.open('bg-cache');
-        await cache.add(url);
-        return true;
-    } catch (err) {
-        console.error('Cache Error:', err);
-        return false;
-    }
-};
 
-export const getCachedImage = async (url) => {
-    try {
-        const cache = await caches.open('bg-cache');
-        const response = await cache.match(url);
-        if (response) {
-            const blob = await response.blob();
-            return URL.createObjectURL(blob);
-        }
-        return null;
-    } catch (err) {
-        return null;
-    }
-};

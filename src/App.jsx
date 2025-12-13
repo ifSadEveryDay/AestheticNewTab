@@ -4,7 +4,8 @@ import SearchBar from './components/SearchBar';
 import Settings from './components/Settings';
 import ShortcutGrid from './components/ShortcutGrid';
 
-import { fetchRandomPhoto, getCachedImage, cacheImage } from './utils/unsplash';
+import { fetchRandomPhoto } from './utils/unsplash';
+import { cacheBackgroundImage } from './utils/cache';
 
 import { arrayMove } from '@dnd-kit/sortable';
 import syncService from './services/syncService';
@@ -206,26 +207,6 @@ function App() {
     });
   };
 
-  useEffect(() => {
-    const loadBackground = async () => {
-      // Check if we have a cached image for today
-      const lastFetch = localStorage.getItem('bg_last_fetch');
-      const today = new Date().toDateString();
-
-      if (lastFetch !== today) {
-        const photo = await fetchRandomPhoto();
-        if (photo) {
-          setBgUrl(photo.url);
-          localStorage.setItem('bg_url', photo.url);
-          localStorage.setItem('bg_last_fetch', today);
-          // Cache it
-          cacheImage(photo.url);
-        }
-      }
-    };
-
-    loadBackground();
-  }, []);
 
   // Disable browser back/forward gestures (two-finger swipe on trackpad)
   useEffect(() => {
@@ -244,6 +225,13 @@ function App() {
       window.removeEventListener('wheel', preventBrowserGesture);
     };
   }, []);
+
+  // Cache background image when it changes
+  useEffect(() => {
+    if (bgUrl) {
+      cacheBackgroundImage(bgUrl);
+    }
+  }, [bgUrl]);
 
   // Auto-sync when data changes (debounced)
   useEffect(() => {
