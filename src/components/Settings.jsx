@@ -418,6 +418,7 @@ const AddShortcutForm = ({ onAddShortcut, showToast }) => {
 
     const handleUrlChange = (value) => {
         setUrl(value);
+        setSelectedIcon(null);
         if (value.length > 0) {
             const results = searchWebsites(value);
             setSearchResults(results.slice(0, 5)); // Show top 5 results
@@ -491,6 +492,7 @@ const AddShortcutForm = ({ onAddShortcut, showToast }) => {
                 url={url}
                 onSelect={setSelectedIcon}
                 selectedIcon={selectedIcon}
+                autoSelectFirst
             />
 
             <button

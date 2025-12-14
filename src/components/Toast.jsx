@@ -8,7 +8,7 @@ const Toast = ({ message, type = 'success', onClose }) => {
         }, 3000);
 
         return () => clearTimeout(timer);
-    }, [onClose]);
+    }, []);
 
     const icons = {
         success: <Check className="h-5 w-5" />,

@@ -1,22 +1,118 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Upload, Check } from 'lucide-react';
 import { getAllIconUrls } from '../utils/icons';
 
-const IconSelector = ({ url, onSelect, selectedIcon }) => {
+const IconSelector = ({ url, onSelect, selectedIcon, autoSelectFirst = false }) => {
     const [iconPreviews, setIconPreviews] = useState([]);
-    const [selectedSource, setSelectedSource] = useState(selectedIcon || null);
+    const [selectedSource, setSelectedSource] = useState(null);
     const [customIcon, setCustomIcon] = useState(null);
     const [failedSources, setFailedSources] = useState(new Set());
     const [iconDimensions, setIconDimensions] = useState({});
+    const resolvedSourcesRef = useRef(new Set());
+    const [resolvedCount, setResolvedCount] = useState(0);
+    const [totalSources, setTotalSources] = useState(0);
+    const [autoSelectReady, setAutoSelectReady] = useState(false);
+    const [autoSelected, setAutoSelected] = useState(false);
+    const [hasUserSelected, setHasUserSelected] = useState(false);
+
+    useEffect(() => {
+        if (!selectedIcon) {
+            setSelectedSource(null);
+            setCustomIcon(null);
+            return;
+        }
+
+        if (selectedIcon.type === 'custom') {
+            setSelectedSource('custom');
+            setCustomIcon(selectedIcon.data);
+            return;
+        }
+
+        if (selectedIcon.type === 'source') {
+            setSelectedSource(selectedIcon.source);
+            setCustomIcon(null);
+        }
+    }, [selectedIcon]);
 
     useEffect(() => {
         if (url) {
-            const icons = getAllIconUrls(url);
+            const normalizedUrl = url.startsWith('http') ? url : `https://${url}`;
+            const icons = getAllIconUrls(normalizedUrl);
             setIconPreviews(icons);
             setFailedSources(new Set());
             setIconDimensions({});
+
+            resolvedSourcesRef.current = new Set();
+            setResolvedCount(0);
+            setTotalSources(icons.length);
+            setAutoSelected(false);
+            setAutoSelectReady(false);
+            setHasUserSelected(false);
+
+            const timeoutId = window.setTimeout(() => {
+                setAutoSelectReady(true);
+            }, 1500);
+
+            return () => {
+                window.clearTimeout(timeoutId);
+            };
         }
     }, [url]);
+
+    const markResolved = (source) => {
+        if (resolvedSourcesRef.current.has(source)) return;
+        resolvedSourcesRef.current.add(source);
+        setResolvedCount(resolvedSourcesRef.current.size);
+    };
+
+    const sortedIconPreviews = useMemo(() => {
+        return iconPreviews
+            .map((icon, index) => {
+                const dims = iconDimensions[icon.source];
+                const maxSide = dims ? Math.max(dims.width, dims.height) : 0;
+                const area = dims ? dims.width * dims.height : 0;
+                return { icon, index, maxSide, area };
+            })
+            .filter(({ icon }) => !failedSources.has(icon.source))
+            .sort((a, b) => {
+                if (b.maxSide !== a.maxSide) return b.maxSide - a.maxSide;
+                if (b.area !== a.area) return b.area - a.area;
+                return a.index - b.index;
+            })
+            .map(({ icon }) => icon);
+    }, [iconPreviews, failedSources, iconDimensions]);
+
+    const allResolved = totalSources > 0 && resolvedCount >= totalSources;
+
+    useEffect(() => {
+        if (!autoSelectFirst) return;
+        if (hasUserSelected) return;
+        if (selectedSource) return;
+        if (selectedIcon) return;
+        if (sortedIconPreviews.length === 0) return;
+        if (!allResolved && !autoSelectReady) return;
+
+        const first = sortedIconPreviews[0];
+        setSelectedSource(first.source);
+        setCustomIcon(null);
+        onSelect({ type: 'source', source: first.source, url: first.url });
+        setAutoSelected(true);
+    }, [autoSelectFirst, hasUserSelected, selectedSource, selectedIcon, sortedIconPreviews, allResolved, autoSelectReady, onSelect]);
+
+    useEffect(() => {
+        if (!autoSelectFirst) return;
+        if (!allResolved) return;
+        if (hasUserSelected) return;
+        if (selectedIcon) return;
+        if (sortedIconPreviews.length === 0) return;
+
+        const first = sortedIconPreviews[0];
+        if (selectedSource === first.source) return;
+
+        setSelectedSource(first.source);
+        setCustomIcon(null);
+        onSelect({ type: 'source', source: first.source, url: first.url });
+    }, [autoSelectFirst, allResolved, hasUserSelected, selectedIcon, selectedSource, sortedIconPreviews, onSelect]);
 
     const handleImageError = (source) => {
         setFailedSources(prev => {
@@ -24,6 +120,8 @@ const IconSelector = ({ url, onSelect, selectedIcon }) => {
             next.add(source);
             return next;
         });
+
+        markResolved(source);
     };
 
     const handleImageLoad = (source, e) => {
@@ -31,12 +129,15 @@ const IconSelector = ({ url, onSelect, selectedIcon }) => {
         if (naturalWidth && naturalHeight) {
             setIconDimensions(prev => ({
                 ...prev,
-                [source]: `${naturalWidth}x${naturalHeight}`
+                [source]: { width: naturalWidth, height: naturalHeight }
             }));
         }
+
+        markResolved(source);
     };
 
     const handleIconSelect = (source, iconUrl) => {
+        setHasUserSelected(true);
         setSelectedSource(source);
         setCustomIcon(null);
         onSelect({ type: 'source', source, url: iconUrl });
@@ -60,6 +161,7 @@ const IconSelector = ({ url, onSelect, selectedIcon }) => {
 
         const reader = new FileReader();
         reader.onloadend = () => {
+            setHasUserSelected(true);
             setCustomIcon(reader.result);
             setSelectedSource('custom');
             onSelect({ type: 'custom', data: reader.result });
@@ -81,8 +183,7 @@ const IconSelector = ({ url, onSelect, selectedIcon }) => {
 
             {/* Icon Previews Grid */}
             <div className="grid grid-cols-6 gap-2">
-                {iconPreviews
-                    .filter(icon => !failedSources.has(icon.source))
+                {sortedIconPreviews
                     .map((icon) => (
                         <button
                             key={icon.source}
@@ -92,7 +193,7 @@ const IconSelector = ({ url, onSelect, selectedIcon }) => {
                                 ? 'border-blue-500 ring-2 ring-blue-500/50'
                                 : 'border-white/10 hover:border-white/30'
                                 }`}
-                            title={`${icon.name} ${iconDimensions[icon.source] ? `(${iconDimensions[icon.source]})` : ''}`}
+                            title={`${icon.name} ${iconDimensions[icon.source] ? `(${iconDimensions[icon.source].width}x${iconDimensions[icon.source].height})` : ''}`}
                         >
                             <img
                                 src={icon.url}
@@ -103,7 +204,7 @@ const IconSelector = ({ url, onSelect, selectedIcon }) => {
                             />
                             {iconDimensions[icon.source] && (
                                 <div className="absolute bottom-0.5 right-0.5 bg-black/60 text-[8px] text-white/90 px-1 rounded backdrop-blur-[2px]">
-                                    {iconDimensions[icon.source]}
+                                    {iconDimensions[icon.source].width}x{iconDimensions[icon.source].height}
                                 </div>
                             )}
                             {selectedSource === icon.source && (
