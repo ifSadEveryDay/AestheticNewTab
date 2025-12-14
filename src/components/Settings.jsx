@@ -40,7 +40,8 @@ const Settings = ({
         if (photo) {
             localStorage.setItem('bg_url', photo.url);
             localStorage.setItem('bg_last_fetch', new Date().toDateString());
-            cacheImage(photo.url);
+            localStorage.setItem('last_local_update', new Date().toISOString());
+            cacheBackgroundImage(photo.url);
             if (onBgUpdate) onBgUpdate(photo.url);
         }
         setIsLoadingBg(false);
@@ -367,7 +368,8 @@ const Settings = ({
                 onSelectWallpaper={(url) => {
                     localStorage.setItem('bg_url', url);
                     localStorage.setItem('bg_last_fetch', new Date().toDateString());
-                    cacheImage(url);
+                    localStorage.setItem('last_local_update', new Date().toISOString());
+                    cacheBackgroundImage(url);
                     if (onBgUpdate) onBgUpdate(url);
                 }}
             />

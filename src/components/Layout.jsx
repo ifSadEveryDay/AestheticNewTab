@@ -52,12 +52,6 @@ const Layout = ({ children, backgroundUrl, bgConfig }) => {
         if (!backgroundUrl) return;
         if (backgroundUrl === activeBg && !isInitialLoad) return;
 
-        // If we found it in cache during initial load, skip this
-        if (isInitialLoad && activeBg) {
-            setIsInitialLoad(false);
-            return;
-        }
-
         setNextBg(backgroundUrl);
     }, [backgroundUrl]);
 
@@ -70,6 +64,7 @@ const Layout = ({ children, backgroundUrl, bgConfig }) => {
         img.onload = () => {
             setActiveBg(nextBg);
             setNextBg(null);
+            setIsInitialLoad(false);
         };
         img.onerror = () => {
             // Still switch if error to avoid stuck state, maybe show fallback?
@@ -77,6 +72,7 @@ const Layout = ({ children, backgroundUrl, bgConfig }) => {
             // Proceeding to switch to avoid stuck loading state
             setActiveBg(nextBg);
             setNextBg(null);
+            setIsInitialLoad(false);
         };
     }, [nextBg]);
 
