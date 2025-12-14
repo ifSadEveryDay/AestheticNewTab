@@ -1,6 +1,6 @@
 // Sync service for communicating with Cloudflare Worker
 // TODO: Update this URL after deploying your worker
-const WORKER_URL = 'https://geo-get.kuifang24.workers.dev';
+const WORKER_URL = 'https://newtab.6781314.xyz';
 
 class SyncService {
     constructor() {
